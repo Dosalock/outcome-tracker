@@ -1,0 +1,472 @@
+t2
+Modify workflow.yaml as follows:
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write 
+  contents: write 
+  pages: write    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 
+
+      - name: Vite GitHub Pages Deployer
+        uses: skywarth/vite-github-pages-deployer@v1.5.0
+        with:
+          public_base_path: /coderatul-portfolio/  # Replace with your repository name
+          build_path: ./dist
+          install_phase_node_env: dev
+          build_phase_node_env: production
+          package_manager: npm
+          artifact_name: github-pages
+          debug_mode: false
+          working_path: ./
+Step 4: Verify the Deployment
+Make appropriate changes, paste the modified workflow.yaml, commit it, and the workflow will start under the Actions tab.
+Under Settings > Pages, you’ll see a live link to the deployed project.
+What is a Workflow?
+A workflow automates the process: any time you push code, GitHub Actions will automatically build and deploy your project. This is part of CI/CD.
+
+Common Issues and Fixes
+1. Blank Page After Deployment
+Make sure the base property in vite.config.ts is correctly set to /repository-name/.
+Clear browser cache or use incognito mode.
+2. 403 Permission Errors
+Ensure the GITHUB_TOKEN in your workflow has the correct permissions:
+permissions:
+  id-token: write
+  contents: write
+  pages: write
+3. Asset Paths Not Resolving
+Double-check the base property in vite.config.ts and ensure it matches your repo name.
+Conclusion
+Deploying a lovable.dev project to GitHub Pages is simple with the right setup. By setting the base path in vite.config.ts and automating deployment using GitHub Actions, you can publish your project effortlessly.
+
+profile
+Sentry
+Promoted
+
+Sentry image
+
+Monitoring your MCP Server in Production (with Sentry)
+A walkthrough mcp error handling, navigating Cloudflare setup quirks with Sentry, and tracing to connect all the dots.
+
+Read more →
+
+Top comments (21)
+Subscribe
+pic
+Add to the discussion
+ 
+ 
+poolshark profile image
+Flo Ragossnig
+•
+May 8
+
+A quick update. I have no clue if Github changed the default pages route now but according to their docs you must name your repo <username>.github.io. This will automatically be your base route (so https://.github.io). Therefore, in the vite.config.ts, the base path must be
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import { componentTagger } from "lovable-tagger";
+
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
+  plugins: [
+    react(),
+    mode === 'development' &&
+    componentTagger(),
+  ].filter(Boolean),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  base: '/' // Since this will be the base directory
+}));
+Additionally, you need to change the base path destination in the workflow.yaml file accordingly
+
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write 
+  contents: write 
+  pages: write    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 
+
+      - name: Vite GitHub Pages Deployer
+        uses: skywarth/vite-github-pages-deployer@v1.5.0
+        with:
+          public_base_path: /  # This is the base
+          build_path: ./dist
+          install_phase_node_env: dev
+          build_phase_node_env: production
+          package_manager: npm
+          artifact_name: github-pages
+          debug_mode: false
+          working_path: ./
+
+3
+Like
+
+ 
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 8
+
+my repo name is coderatul.github.io and i set base path to this only
+
+in workflow : public_base_path: /coderatul.github.io/
+and in vite config file: base: '/coderatul.github.io/'
+
+and it works maybe you forgot : /repo name/ (the slashesh)
+
+anyway i went through your github and yours seems working with base as / so thanks for commenting this people facing issue might get it right with base as /
+
+
+2
+Like
+
+ 
+ 
+daros_neochmosis profile image
+Daros Neochmosis
+•
+May 8
+
+everything done properly but still getting 404
+
+
+2
+Like
+
+ 
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 8
+
+try this dev.to/poolshark/comment/2nhik
+
+
+2
+Like
+
+ 
+ 
+daros_neochmosis profile image
+Daros Neochmosis
+•
+May 9 • Edited
+
+Yes, that fixed the problem bro, problem caused because I didnt change the workflow properly!
+thanks again and keep up the good work sharing such projects
+
+
+2
+Like
+Thread
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 9
+
+thanks for your kind words and appreciating
+
+
+2
+Like
+Thread
+ 
+daros_neochmosis profile image
+Daros Neochmosis
+•
+May 9
+
+Your most welcome, have you ever tried a second page or I guess probably need a new github acc for that
+
+
+2
+Like
+Thread
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 9
+
+most probably yes, we may host multiple pages from a single account
+
+
+1
+Like
+
+ 
+ 
+daros_neochmosis profile image
+Daros Neochmosis
+•
+May 9 • Edited
+
+Thank you for your quick reply, I think I tried it before writing here but I will try again later and get back to you
+
+
+1
+Like
+
+ 
+ 
+girish_singh_2000 profile image
+girish singh
+•
+Jun 29
+
+I followed both steps from blog and below comment but still getting blank page. Any other idea? I tried with incognito mode as well but no luck?
+
+
+1
+Like
+
+ 
+ 
+coderatul profile image
+Atul Kushwaha
+•
+Jun 29
+
+please share link to your repo
+
+
+1
+Like
+
+ 
+ 
+girish_singh_2000 profile image
+girish singh
+•
+Jun 30
+
+Thanks for giving you time. Repo : github.com/NajwaniGirish/girish-po...
+
+
+1
+Like
+Thread
+ 
+coderatul profile image
+Atul Kushwaha
+•
+Jul 3
+
+@girish_singh_2000 i think you didn't followed the steps correctly, the repo you have shared is the same repo generated by lovable and not according to the steps mentioned above
+
+
+1
+Like
+Thread
+ 
+girish_singh_2000 profile image
+girish singh
+•
+Jul 3
+
+I cloned the lovable repo as it is in my pc and then followed all the steps (The files were copy pasted from the lovable repo) is there anything prior steps that I missed? The repo linked with lovable is different ("de-portfolio" in my Github. let me know the reasons you think it is same then maybe I could try again resolving those.
+
+
+1
+Like
+
+ 
+ 
+madhurima_rawat profile image
+Madhurima Rawat
+•
+May 4
+
+Your portfolio looks good ✨️ Looking forward to custom domain article, would be helpful
+
+
+2
+Like
+
+ 
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 4
+
+a blog has been uploaded reagarding this blog
+
+
+2
+Like
+
+ 
+ 
+madhurima_rawat profile image
+Madhurima Rawat
+•
+May 5
+
+Thanks for uploading! I read the blog — it’s really informative.
+
+
+2
+Like
+
+ 
+ 
+srijan-xi profile image
+Srijan Kumar
+•
+May 2
+
+Can you a video tutorial for this
+
+
+4
+Like
+
+ 
+ 
+coderatul profile image
+Atul Kushwaha
+•
+May 3
+
+on whihc platform should i upload it any recommendation ?
+
+
+1
+Like
+
+ 
+ 
+jenkan27 profile image
+Jens Holm
+•
+May 27
+
+I had issues with it not working, with page not found, blank page etc. so i deleted it all and gave up lol, but now i realised it might be because my repo was privet and githubpages requires a public repo to display it for free, so if your repo is private set it to public lol
+
+
+2
+Like
+
+View full discussion (21 comments)
+Some comments may only be visible to logged-in visitors. Sign in to view all comments.
+
+Code of Conduct • Report abuse
+profile
+MongoDB
+Promoted
+
+MongoDB Atlas runs apps anywhere. Try it now.
+
+MongoDB Atlas runs apps anywhere. Try it now.
+MongoDB Atlas lets you build and run modern apps anywhere—across AWS, Azure, and Google Cloud. With availability in 115+ regions, deploy near users, meet compliance, and scale confidently worldwide.
+
+Start Free
+
+
+Atul Kushwaha
+Follow
+learning android developnment with kotlin
+Location
+india
+Pronouns
+he/him
+Joined
+Oct 2, 2020
+More from Atul Kushwaha
+Free custom domain for your projects 😉
+#github #tutorial #opensource #programming
+self & class diagram !
+#oop #procurement #tutorial #beginners
+class, constructor and magic methods !
+#python #oop #tutorial #beginners
+profile
+MongoDB
+Promoted
+
+Gen AI apps are built with MongoDB Atlas
+
+Gen AI apps are built with MongoDB Atlas
+MongoDB Atlas is the developer-friendly database for building, scaling, and running gen AI & LLM apps—no separate vector DB needed. Enjoy native vector search, 115+ regions, and flexible document modeling. Build AI faster, all in one place.
+
+Start Free
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write 
+  contents: write 
+  pages: write    
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18 
+
+      - name: Vite GitHub Pages Deployer
+        uses: skywarth/vite-github-pages-deployer@v1.5.0
+        with:
+          public_base_path: /coderatul-portfolio/  # Replace with your repository name
+          build_path: ./dist
+          install_phase_node_env: dev
+          build_phase_node_env: production
+          package_manager: npm
+          artifact_name: github-pages
+          debug_mode: false
+          working_path: ./
