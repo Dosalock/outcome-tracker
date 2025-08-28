@@ -4,32 +4,38 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Trash2, Edit2, Phone, RotateCcw } from 'lucide-react';
+import { Trash2, Edit2, Phone, RotateCcw, Languages } from 'lucide-react';
 import { useCallTracker } from '@/hooks/useCallTracker';
 import { CallOutcome } from '@/types/call-tracker';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
-const CALL_OUTCOMES: { value: CallOutcome; label: string; color: string }[] = [
-  { value: 'yes-needs-confirmation', label: 'Yes (Needs Confirmation)', color: 'bg-success hover:bg-success-light' },
-  { value: 'confirmed-sale', label: 'Confirmed Sale', color: 'bg-success hover:bg-success-light' },
-  { value: 'no', label: 'No', color: 'bg-danger hover:bg-danger-light' },
-  { value: 'absolutely-no', label: 'Absolutely No', color: 'bg-danger hover:bg-danger-light' },
-  { value: 'hangup', label: 'Hangup', color: 'bg-neutral hover:bg-neutral-light' },
-  { value: 'call-later', label: 'Call Later', color: 'bg-info hover:bg-info-light' },
-  { value: 'call-in-2-months', label: 'Call in 2 Months', color: 'bg-info hover:bg-info-light' },
-  { value: 'sickness-medicine', label: 'Sickness/Medicine', color: 'bg-warning hover:bg-warning-light' },
-  { value: 'already-customer', label: 'Already a Customer', color: 'bg-warning hover:bg-warning-light' },
-  { value: 'not-enough-money', label: 'Not Enough Money', color: 'bg-warning hover:bg-warning-light' },
-  { value: 'language-difficulties', label: 'Language Difficulties', color: 'bg-warning hover:bg-warning-light' },
-  { value: 'wrong-number', label: 'Wrong Number', color: 'bg-neutral hover:bg-neutral-light' },
-  { value: 'dnc', label: 'DNC (Do Not Call)', color: 'bg-neutral hover:bg-neutral-light' },
+const getCallOutcomes = (t: (key: string) => string): { value: CallOutcome; label: string; color: string }[] => [
+  { value: 'yes-needs-confirmation', label: t('yes-needs-confirmation'), color: 'bg-success hover:bg-success-light' },
+  { value: 'confirmed-sale', label: t('confirmed-sale'), color: 'bg-success hover:bg-success-light' },
+  { value: 'no', label: t('no'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'absolutely-no', label: t('absolutely-no'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'hangup', label: t('hangup'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'call-later', label: t('call-later'), color: 'bg-info hover:bg-info-light' },
+  { value: 'call-in-2-months', label: t('call-in-2-months'), color: 'bg-info hover:bg-info-light' },
+  { value: 'sickness-medicine', label: t('sickness-medicine'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'already-customer', label: t('already-customer'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'not-enough-money', label: t('not-enough-money'), color: 'bg-danger hover:bg-danger-light' },
+  { value: 'language-difficulties', label: t('language-difficulties'), color: 'bg-warning hover:bg-warning-light' },
+  { value: 'wrong-number', label: t('wrong-number'), color: 'bg-warning hover:bg-warning-light' },
+  { value: 'dnc', label: t('dnc'), color: 'bg-danger hover:bg-danger-light' },
 ];
 
 export const CallTracker: React.FC = () => {
   const { calls, addCall, updateCall, deleteCall, startNewSession, stats } = useCallTracker();
+  const { language, setLanguage, t } = useLanguage();
   const [notes, setNotes] = useState('');
   const [editingCall, setEditingCall] = useState<string | null>(null);
   const [editNotes, setEditNotes] = useState('');
+
+  const CALL_OUTCOMES = getCallOutcomes(t);
 
   const handleAddCall = (outcome: CallOutcome) => {
     addCall(outcome, notes.trim() || undefined);
@@ -54,6 +60,17 @@ export const CallTracker: React.FC = () => {
     return CALL_OUTCOMES.find(config => config.value === outcome) || CALL_OUTCOMES[0];
   };
 
+  // Prepare chart data
+  const yesNoData = [
+    { name: t('yes'), value: Math.round(stats.yesRatio), fill: 'hsl(var(--success))' },
+    { name: t('no'), value: Math.round(100 - stats.yesRatio), fill: 'hsl(var(--danger))' }
+  ];
+
+  const engagementData = [
+    { name: t('engaged'), value: Math.round(stats.engagementRatio), fill: 'hsl(var(--info))' },
+    { name: t('not-engaged'), value: Math.round(100 - stats.engagementRatio), fill: 'hsl(var(--neutral))' }
+  ];
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -64,18 +81,37 @@ export const CallTracker: React.FC = () => {
               <Phone className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Call Tracker</h1>
-              <p className="text-muted-foreground">Track your call outcomes and performance</p>
+              <h1 className="text-3xl font-bold text-foreground">{t('call-tracker')}</h1>
+              <p className="text-muted-foreground">{t('track-performance')}</p>
             </div>
           </div>
-          <Button 
-            onClick={startNewSession}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="h-4 w-4" />
-            New Session
-          </Button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Languages className="h-4 w-4 text-muted-foreground" />
+              <Button
+                variant={language === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('en')}
+              >
+                EN
+              </Button>
+              <Button
+                variant={language === 'sv' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLanguage('sv')}
+              >
+                SV
+              </Button>
+            </div>
+            <Button 
+              onClick={startNewSession}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {t('new-session')}
+            </Button>
+          </div>
         </div>
 
         {/* Statistics Dashboard */}
@@ -84,7 +120,7 @@ export const CallTracker: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Calls</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('total-calls')}</p>
                   <p className="text-2xl font-bold text-foreground">{stats.totalCalls}</p>
                 </div>
                 <div className="p-2 bg-primary/10 rounded-lg">
@@ -98,7 +134,7 @@ export const CallTracker: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Confirmed Sales</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('confirmed-sales')}</p>
                   <p className="text-2xl font-bold text-success">{stats.confirmedSales}</p>
                 </div>
                 <div className="p-2 bg-success/10 rounded-lg">
@@ -112,11 +148,30 @@ export const CallTracker: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Yes Ratio</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('yes-ratio')}</p>
                   <p className="text-2xl font-bold text-success">{stats.yesRatio.toFixed(1)}%</p>
                 </div>
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <div className="h-5 w-5 bg-success rounded-full"></div>
+                <div className="w-16 h-16">
+                  <ChartContainer config={{ yes: { color: 'hsl(var(--success))' }, no: { color: 'hsl(var(--danger))' } }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={yesNoData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={20}
+                          outerRadius={30}
+                        >
+                          {yesNoData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
               </div>
             </CardContent>
@@ -126,11 +181,30 @@ export const CallTracker: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Engagement Ratio</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('engagement-ratio')}</p>
                   <p className="text-2xl font-bold text-info">{stats.engagementRatio.toFixed(1)}%</p>
                 </div>
-                <div className="p-2 bg-info/10 rounded-lg">
-                  <div className="h-5 w-5 bg-info rounded-full"></div>
+                <div className="w-16 h-16">
+                  <ChartContainer config={{ engaged: { color: 'hsl(var(--info))' }, notEngaged: { color: 'hsl(var(--neutral))' } }}>
+                    <ResponsiveContainer>
+                      <PieChart>
+                        <Pie
+                          data={engagementData}
+                          dataKey="value"
+                          nameKey="name"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={20}
+                          outerRadius={30}
+                        >
+                          {engagementData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
               </div>
             </CardContent>
@@ -142,7 +216,7 @@ export const CallTracker: React.FC = () => {
           <div className="lg:col-span-2 space-y-4">
             <Card className="shadow-md">
               <CardHeader>
-                <CardTitle>Log Call Outcome</CardTitle>
+                <CardTitle>{t('log-call-outcome')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -162,10 +236,10 @@ export const CallTracker: React.FC = () => {
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
-                    Notes (Optional)
+                    {t('notes-optional')}
                   </label>
                   <Textarea
-                    placeholder="Add any additional notes about this call..."
+                    placeholder={t('add-notes-placeholder')}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className="resize-none"
@@ -180,13 +254,13 @@ export const CallTracker: React.FC = () => {
           <div className="space-y-4">
             <Card className="shadow-md">
               <CardHeader>
-                <CardTitle>Call History</CardTitle>
+                <CardTitle>{t('call-history')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {calls.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">
-                      No calls logged yet. Start making calls!
+                      {t('no-calls-yet')}
                     </p>
                   ) : (
                     calls.map((call) => {
@@ -227,7 +301,7 @@ export const CallTracker: React.FC = () => {
                               </DialogTrigger>
                               <DialogContent>
                                 <DialogHeader>
-                                  <DialogTitle>Edit Call</DialogTitle>
+                                  <DialogTitle>{t('edit-call')}</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div className="grid grid-cols-2 gap-2">
@@ -246,7 +320,7 @@ export const CallTracker: React.FC = () => {
                                     ))}
                                   </div>
                                   <Textarea
-                                    placeholder="Notes..."
+                                    placeholder={t('notes-placeholder')}
                                     value={editNotes}
                                     onChange={(e) => setEditNotes(e.target.value)}
                                     rows={3}
