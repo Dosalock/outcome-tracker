@@ -151,17 +151,17 @@ export const CallTracker: React.FC = () => {
                   <p className="text-sm font-medium text-muted-foreground">{t('yes-ratio')}</p>
                   <p className="text-2xl font-bold text-success">{stats.yesRatio.toFixed(1)}%</p>
                 </div>
-                <div className="w-24 h-24 flex items-center justify-center">
+                <div className="w-20 h-20">
                   <ChartContainer config={{ yes: { color: 'hsl(var(--success))' }, no: { color: 'hsl(var(--danger))' } }}>
-                    <ResponsiveContainer width={80} height={80}>
-                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
                         <Pie
                           data={yesNoData}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          outerRadius={38}
+                          outerRadius={35}
                         >
                           {yesNoData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -183,17 +183,17 @@ export const CallTracker: React.FC = () => {
                   <p className="text-sm font-medium text-muted-foreground">{t('engagement-ratio')}</p>
                   <p className="text-2xl font-bold text-info">{stats.engagementRatio.toFixed(1)}%</p>
                 </div>
-                <div className="w-24 h-24 flex items-center justify-center">
+                <div className="w-20 h-20">
                   <ChartContainer config={{ engaged: { color: 'hsl(var(--info))' }, notEngaged: { color: 'hsl(var(--neutral))' } }}>
-                    <ResponsiveContainer width={80} height={80}>
-                      <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
                         <Pie
                           data={engagementData}
                           dataKey="value"
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          outerRadius={38}
+                          outerRadius={35}
                         >
                           {engagementData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
