@@ -87,7 +87,7 @@ export const useCallTracker = () => {
     ).length;
     
     const noCount = calls.filter(call => 
-      call.outcome === 'no' || call.outcome === 'absolutely-no'
+      call.outcome === 'no'
     ).length;
     
     // Engagement includes yes and no (excludes hangups and non-intros)
