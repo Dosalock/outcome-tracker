@@ -112,7 +112,7 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguage] = useState<Language>('sv');
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('call-tracker-language') as Language;
